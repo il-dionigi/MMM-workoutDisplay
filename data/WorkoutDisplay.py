@@ -26,19 +26,6 @@ if not creds or creds.invalid:
 
 drive_service = discovery.build('drive', 'v3', http=creds.authorize(Http()))
 
-# GOOGLE DRIVE FUNCTIONS
-
-# def check_for_update(lastUpdate):
-# 	response = drive_service.files().list(q="modifiedTime > '" + lastUpdate + "'",
-#                                     spaces='drive',
-#                                     fields='nextPageToken, files(id, name)',
-#                                     pageToken=page_token).execute()
-
-# 	if (updateStatus == True):
-# 		return True
-# 	else:
-# 		return False
-
 def download_file(file_id, mimeType, filename):
 	if "google-apps" in mimeType:
 		# skip google files
@@ -51,8 +38,6 @@ def download_file(file_id, mimeType, filename):
 		status, done = downloader.next_chunk()
 		return True
 	return False
-
-# END OF GOOGLE DRIVE INIT
 
 def print_json(type, message):
 	print(json.dumps({'type': type, 'message': message}))
@@ -144,14 +129,13 @@ response = drive_service.files().list(q="'" + file_id + "' in parents and modifi
                                     fields='nextPageToken, files(id, name)',
                                     pageToken=None).execute()
 for file in response.get('files', []):
-	print_json("ERROR", file.get('name'))
 	download_file(file.get('id'), 'text/csv', rawPath)
 	request = 'UPDATE_FILE'
 	break
 
 #
 
-if request == 'UPDATE_FILE':
+if (request == 'UPDATE_FILE'):
 
 	with open(rawPath, "r") as gymNotesFile:
 		gymNotesReader = csv.reader(gymNotesFile)
@@ -204,7 +188,7 @@ if request == 'UPDATE_FILE':
 	csvfile.close()
 	request = 'UPDATE_DAY'
 
-if request == 'UPDATE_DAY':
+if (request == 'UPDATE_DAY'):
 
 	lastExercise = ""
 	numExercises = None
@@ -212,6 +196,7 @@ if request == 'UPDATE_DAY':
 	with open(formattedPath, "r") as csvFile:
 		workoutReader = csv.reader(csvFile)
 		curTime = today
+		span = 0
 		for row in workoutReader:
 			if len (row) != 0 and row[0] == curTime:
 				print_json("NumExercises", row[1])
@@ -219,14 +204,24 @@ if request == 'UPDATE_DAY':
 #				todayFound = True
 #			elif numExercises >= 0:
 			elif (row[0] != tomorrow):
-				if (row[0] != lastExercise):
+				if (lastExercise != ""):
+					span += 1
+				if (row[0] != lastExercise and lastExercise != ""):
 					numExercises -= 1
+					if numExercises == 0:
+						span += 1
+					print_json("Span", span)
+					span = 0
 				lastExercise = row[0]
+				if numExercises == 0:
+					print_json("Span", span)					
 				print_json("Exercise", row[0])
 				print_json("Weight", row[1])
 				print_json("Sets", row[2])
 				print_json("Reps", row[3])
-			else:
+			else: # end of exercises
+				span += 1
+				print_json("Span", span)									
 				break
 				
 	csvFile.close()

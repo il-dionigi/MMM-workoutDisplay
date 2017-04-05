@@ -1,0 +1,17 @@
+.workout-header-key {
+	text-align: right;
+	color: #cccccc;
+	margin: 1em 2em;
+    padding: 7px 0.5em 0px 0.5em;
+}
+
+.workout-info {
+    color: #cccccc;
+}
+
+#workout-info-name {
+    vertical-align: text-top;
+    color: #cccccc;
+    width: 10em;
+    word-wrap: break-word;
+}

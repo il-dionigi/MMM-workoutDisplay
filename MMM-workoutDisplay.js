@@ -2,6 +2,7 @@ Module.register('MMM-workoutDisplay',{
 
 	exerciseList: {
 		totExercises: "",
+		eSpan: "",
 		todaysWorkout: ""
 	},
 
@@ -32,14 +33,14 @@ Module.register('MMM-workoutDisplay',{
 		setInterval(function() {
 			Log.log("Updating workout");
 			self.updateWorkout();
-		}, 20*1000);
-		//12*60*60*1000);
+		}, 6*60*60*1000);
 		Log.log("End of start");
 	},
 	
 	updateWorkout: function() {
 		Log.log("Updating");
 		this.exerciseList['todaysWorkout'] = "";
+		this.exerciseList['eSpan'] = "";
 		this.exerciseList['totExercises'] = "";
 		this.sendSocketNotification('UPDATE', 'UPDATE_DAY' + '|' + this.config['folderID'] + '|' + this.driveData['updateTime']);
 	},
@@ -47,13 +48,11 @@ Module.register('MMM-workoutDisplay',{
 	// Override dom generator.
 	getDom: function() {
 		var wrapper = document.createElement("table");
+		wrapper.id = "workout-table"
 		wrapper.className = "small";
 
 		var message = document.createElement("tr");
 		var messageInfo = document.createElement("th");
-
-		Log.log("Filename is: ");
-		Log.log(this.config.fileName);
 
 		if (!this.loaded) {
 			wrapper.innerHTML = "Loading today's workout...";
@@ -76,37 +75,60 @@ Module.register('MMM-workoutDisplay',{
 		}
 		else
 		{
-			var titleHead = document.createElement("thead");
-			titleHead.id = 'table-key';			
+			var titleHead = document.createElement("tbody");
 			var titleRow = document.createElement("tr");
+			titleRow.id = "workout-header";			
 			var title1 = document.createElement("td");
 			title1.innerHTML = "Exercise";
+			title1.className = "workout-header-key";
 			titleRow.appendChild(title1);
 			var title2 = document.createElement("td");
-			title2.innerHTML = "Weight"
+			title2.innerHTML = "Weight";
+			title2.className = "workout-header-key";
 			titleRow.appendChild(title2);
 			var title3 = document.createElement("td");
-			title3.innerHTML = "Sets"
+			title3.innerHTML = "Sets";
+			title3.className = "workout-header-key";
 			titleRow.appendChild(title3);
 			var title4 = document.createElement("td");
-			title4.innerHTML = "Reps"
+			title4.innerHTML = "Reps";
+			title4.className = "workout-header-key";
 			titleRow.appendChild(title4);
 			titleHead.appendChild(titleRow);
 			wrapper.appendChild(titleHead);
 
 			var myLifts = this.exerciseList['todaysWorkout'].split(',');
+			var myLiftsLen = this.exerciseList['eSpan'].split(',');
+			var lastLift = ""
+			var eNum = 0;
 
 			for (var i = 0; i < myLifts.length; i++) {
 				var eSeg = i % 4;
 				switch (eSeg) {
 					case 0:
 						var e = document.createElement("tr");
+						
+						if (myLifts[i] != lastLift)
+						{
 						var eName = document.createElement("td");
-						var eWeight = document.createElement("td");
-						var eReps = document.createElement("td");
-						var eSets = document.createElement("td");
-						eName.innerHTML = myLifts[i];
+						eName.className = "workout-info";
+						eName.id = "workout-info-name";
+							eName.innerHTML = myLifts[i];
+							eName.rowSpan = myLiftsLen[eNum];
+							eNum++;
+							lastLift = myLifts[i];
 						e.appendChild(eName);
+						}
+						
+						var eWeight = document.createElement("td");
+						eWeight.className = "workout-info";
+						eWeight.id = "workout-info-weight";
+						var eReps = document.createElement("td");
+						eReps.className = "workout-info";
+						eReps.id = "workout-info-reps";
+						var eSets = document.createElement("td");
+						eSets.className = "workout-info";
+						eSets.id = "workout-info-sets";
 						break;
 					case 1:
 						eWeight.innerHTML = myLifts[i];
@@ -133,17 +155,19 @@ Module.register('MMM-workoutDisplay',{
 			Log.log(payload.message)
 		}
 		else if (notification === "UPDATE") {
-			Log.log('Updating Dom - time was ' + payload);
+			Log.log('Updating Dom');
 			this.loaded = true;
 			this.driveData['updateTime'] = payload;
 			this.updateDom(this.fadeSpeed);
 		}
 		else if (notification === "NumExercises") {
-			Log.log(this.exerciseList['totExercises']);
 			this.exerciseList['totExercises'] = payload.message;
-			Log.log(this.exerciseList['totExercises']);
-			
-			Log.log(this.exerciseList['todaysWorkout']);
+		}		
+		else if (notification === "Span") {
+			if (this.exerciseList['eSpan'] !== "") {
+				this.exerciseList['eSpan'] += ',';
+			}
+			this.exerciseList['eSpan'] += payload.message;
 		}
 		else if (notification === "fileID")
 		{

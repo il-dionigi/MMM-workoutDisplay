@@ -30,8 +30,6 @@ module.exports = NodeHelper.create({
 				+ "T" + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
 			self.sendSocketNotification("UPDATE", datestring);
 			console.log('Finished getting data');
-			console.log(datestring);
-			console.log('Test123');			
 		});
 	}
 });
